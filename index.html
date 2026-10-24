@@ -201,7 +201,14 @@
         const a = document.createElement('a');
         a.className = 'notion-btn';
         a.href = btn.url || '#';
-        a.target = '_blank';
+        
+        // Smart target: Same tab if Notion, new tab if anything else
+        if (btn.url && (btn.url.includes('notion.so') || btn.url.includes('notion.site'))) {
+          a.target = '_self';
+        } else {
+          a.target = '_blank';
+        }
+
         a.textContent = btn.text || 'Button';
         buttonsListEl.appendChild(a);
       });
@@ -220,7 +227,6 @@
         labelInput.className = 'edit-input';
         labelInput.placeholder = 'Text Label';
         labelInput.value = btn.text;
-        // Update data in real-time and refresh main buttons without re-rendering inputs
         labelInput.oninput = (e) => {
           buttons[index].text = e.target.value;
           saveButtons();
@@ -264,7 +270,7 @@
     editToggleEl.addEventListener('click', () => {
       const isActive = editPanelEl.classList.toggle('active');
       if (isActive) {
-        renderEditPanel(); // Refresh inputs when opening panel
+        renderEditPanel();
       }
     });
 
@@ -275,7 +281,6 @@
       renderEditPanel();
     });
 
-    // Initial render
     renderMainButtons();
   </script>
 </body>
