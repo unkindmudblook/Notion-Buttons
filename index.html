@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notion Shortcuts</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    }
+
+    html, body {
+      background: transparent !important;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 0;
+      margin: 0;
+    }
+
+    /* Button Styling */
+    .notion-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #8c9aa7;
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      height: 28px;
+      padding: 0 14px;
+      border-radius: 9999px;
+      border: none;
+      cursor: pointer;
+      width: fit-content;
+      transition: background-color 0.15s ease, transform 0.1s ease;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .notion-btn:hover {
+      background-color: #798795;
+    }
+
+    .notion-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* Edit Button (Icon Only) */
+    .edit-toggle-btn {
+      background: transparent;
+      border: none;
+      color: #8c9aa7;
+      cursor: pointer;
+      padding: 4px;
+      margin-top: 2px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      opacity: 0.6;
+      transition: opacity 0.15s ease, background-color 0.15s ease;
+    }
+
+    .edit-toggle-btn:hover {
+      opacity: 1;
+      background-color: rgba(140, 154, 167, 0.15);
+    }
+
+    .edit-toggle-btn svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    /* Edit Panel Styling (White Background) */
+    .edit-panel {
+      display: none;
+      background-color: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 280px;
+      margin-top: 4px;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .edit-panel.active {
+      display: flex;
+    }
+
+    .button-edit-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .button-edit-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .edit-input {
+      flex: 1;
+      padding: 5px 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-size: 12px;
+      outline: none;
+    }
+
+    .edit-input:focus {
+      border-color: #8c9aa7;
+    }
+
+    .delete-btn {
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 8px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .add-btn {
+      background-color: #ffffff;
+      color: #374151;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+      width: 100%;
+      text-align: center;
+    }
+
+    .add-btn:hover {
+      background-color: #f9fafb;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Buttons Stack -->
+    <div id="buttons-list" style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start;"></div>
+
+    <!-- Edit Toggle Button -->
+    <button class="edit-toggle-btn" id="edit-toggle" title="Edit Buttons">
+      <svg viewBox="0 0 24 24">
+        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+      </svg>
+    </button>
+
+    <!-- Edit Panel -->
+    <div class="edit-panel" id="edit-panel">
+      <div id="edit-items-container" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      <button class="add-btn" id="add-btn">+ Add New Button</button>
+    </div>
+  </div>
+
+  <script>
+    const defaultButtons = [
+      { text: "Notion Dashboard", url: "https://www.notion.so" }
+    ];
+
+    let buttons = JSON.parse(localStorage.getItem('notion_shortcuts')) || defaultButtons;
+
+    const buttonsListEl = document.getElementById('buttons-list');
+    const editToggleEl = document.getElementById('edit-toggle');
+    const editPanelEl = document.getElementById('edit-panel');
+    const editItemsContainerEl = document.getElementById('edit-items-container');
+    const addBtnEl = document.getElementById('add-btn');
+
+    function saveButtons() {
+      localStorage.setItem('notion_shortcuts', JSON.stringify(buttons));
+    }
+
+    function renderMainButtons() {
+      buttonsListEl.innerHTML = '';
+      buttons.forEach(btn => {
+        const a = document.createElement('a');
+        a.className = 'notion-btn';
+        a.href = btn.url || '#';
+        a.target = '_blank';
+        a.textContent = btn.text || 'Button';
+        buttonsListEl.appendChild(a);
+      });
+    }
+
+    function renderEditPanel() {
+      editItemsContainerEl.innerHTML = '';
+      buttons.forEach((btn, index) => {
+        const item = document.createElement('div');
+        item.className = 'button-edit-item';
+
+        const row1 = document.createElement('div');
+        row1.className = 'button-edit-row';
+
+        const labelInput = document.createElement('input');
+        labelInput.className = 'edit-input';
+        labelInput.placeholder = 'Text Label';
+        labelInput.value = btn.text;
+        // Update data in real-time and refresh main buttons without re-rendering inputs
+        labelInput.oninput = (e) => {
+          buttons[index].text = e.target.value;
+          saveButtons();
+          renderMainButtons();
+        };
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'delete-btn';
+        delBtn.textContent = 'Remove';
+        delBtn.onclick = () => {
+          buttons.splice(index, 1);
+          saveButtons();
+          renderMainButtons();
+          renderEditPanel();
+        };
+
+        row1.appendChild(labelInput);
+        row1.appendChild(delBtn);
+
+        const row2 = document.createElement('div');
+        row2.className = 'button-edit-row';
+
+        const urlInput = document.createElement('input');
+        urlInput.className = 'edit-input';
+        urlInput.placeholder = 'https://notion.so/...';
+        urlInput.value = btn.url;
+        urlInput.oninput = (e) => {
+          buttons[index].url = e.target.value;
+          saveButtons();
+          renderMainButtons();
+        };
+
+        row2.appendChild(urlInput);
+
+        item.appendChild(row1);
+        item.appendChild(row2);
+        editItemsContainerEl.appendChild(item);
+      });
+    }
+
+    editToggleEl.addEventListener('click', () => {
+      const isActive = editPanelEl.classList.toggle('active');
+      if (isActive) {
+        renderEditPanel(); // Refresh inputs when opening panel
+      }
+    });
+
+    addBtnEl.addEventListener('click', () => {
+      buttons.push({ text: 'New Page', url: 'https://www.notion.so' });
+      saveButtons();
+      renderMainButtons();
+      renderEditPanel();
+    });
+
+    // Initial render
+    renderMainButtons();
+  </script>
+</body>
+</html>
