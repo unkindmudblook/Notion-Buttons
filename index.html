@@ -105,7 +105,7 @@
     .button-edit-item {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 6px;
       padding-bottom: 8px;
       border-bottom: 1px solid #f0f0f0;
     }
@@ -136,6 +136,20 @@
       border-radius: 4px;
       padding: 5px 8px;
       font-size: 11px;
+      cursor: pointer;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #374151;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .checkbox-label input {
       cursor: pointer;
     }
 
@@ -180,7 +194,7 @@
 
   <script>
     const defaultButtons = [
-      { text: "Notion Dashboard", url: "https://www.notion.so" }
+      { text: "Notion Dashboard", url: "https://www.notion.so", openInNewTab: false }
     ];
 
     let buttons = JSON.parse(localStorage.getItem('notion_shortcuts')) || defaultButtons;
@@ -202,11 +216,15 @@
         a.className = 'notion-btn';
         a.href = btn.url || '#';
         
-        // Smart target: Same tab if Notion, new tab if anything else
-        if (btn.url && (btn.url.includes('notion.so') || btn.url.includes('notion.site'))) {
-          a.target = '_self';
-        } else {
+        if (btn.openInNewTab) {
           a.target = '_blank';
+        } else {
+          // Use _top for Notion within iframes so it opens in the same tab, otherwise _self
+          if (btn.url && (btn.url.includes('notion.so') || btn.url.includes('notion.site'))) {
+            a.target = '_top';
+          } else {
+            a.target = '_self';
+          }
         }
 
         a.textContent = btn.text || 'Button';
@@ -220,6 +238,7 @@
         const item = document.createElement('div');
         item.className = 'button-edit-item';
 
+        // Row 1: Label Input & Delete Button
         const row1 = document.createElement('div');
         row1.className = 'button-edit-row';
 
@@ -246,6 +265,7 @@
         row1.appendChild(labelInput);
         row1.appendChild(delBtn);
 
+        // Row 2: URL Input
         const row2 = document.createElement('div');
         row2.className = 'button-edit-row';
 
@@ -261,8 +281,29 @@
 
         row2.appendChild(urlInput);
 
+        // Row 3: Open in new tab checkbox
+        const row3 = document.createElement('div');
+        row3.className = 'button-edit-row';
+
+        const checkboxLabel = document.createElement('label');
+        checkboxLabel.className = 'checkbox-label';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = !!btn.openInNewTab;
+        checkbox.onchange = (e) => {
+          buttons[index].openInNewTab = e.target.checked;
+          saveButtons();
+          renderMainButtons();
+        };
+
+        checkboxLabel.appendChild(checkbox);
+        checkboxLabel.appendChild(document.createTextNode('Open in new tab'));
+        row3.appendChild(checkboxLabel);
+
         item.appendChild(row1);
         item.appendChild(row2);
+        item.appendChild(row3);
         editItemsContainerEl.appendChild(item);
       });
     }
@@ -275,7 +316,7 @@
     });
 
     addBtnEl.addEventListener('click', () => {
-      buttons.push({ text: 'New Page', url: 'https://www.notion.so' });
+      buttons.push({ text: 'New Page', url: 'https://www.notion.so', openInNewTab: false });
       saveButtons();
       renderMainButtons();
       renderEditPanel();
